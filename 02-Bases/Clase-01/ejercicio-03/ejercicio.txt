@@ -1,0 +1,13 @@
+var 1firstName string --> incorrecta, los nombres de variables no deben empezar con números, sería var firstName string
+
+var lastName string --> correcta
+
+var int age --> incorrecta, sería var age int
+
+1lastName := 6 --> incorrecta, no pueden empezar con números los nombres, sería lastName := 6
+
+var driver_license = true --> falta el tipo de dato, sería var driver_license bool = true
+
+var person height int --> no puede haber espacios en los nombres. Sería var person_height int
+
+childsNumber := 2 --> correcta

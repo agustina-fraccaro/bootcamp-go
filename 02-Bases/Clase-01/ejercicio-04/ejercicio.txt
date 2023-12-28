@@ -1,0 +1,9 @@
+var lastName string = "Smith" --> ok
+
+var age int = "35" --> debería ser 35 sin las comillas porque es un int
+
+boolean := "false" --> boolean no es un buen nombre, y el false deberia ir sin comillas
+
+var salary string = 45857.90 --> mal el tipo de dato, debería ser float 
+
+var firstName string = "Mary" --> ok
