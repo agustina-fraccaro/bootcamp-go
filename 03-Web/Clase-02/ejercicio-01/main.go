@@ -40,19 +40,18 @@ func main() {
 
 	router := chi.NewRouter()
 
-	http.ListenAndServe(":8080", router)
-
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
 	})
+
 	router.Route("/products", func(r chi.Router) {
-		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(productos)
 		})
 
-		router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 			id, err := strconv.Atoi(chi.URLParam(r, "id"))
 			if err != nil {
 				http.Error(w, "Error al parsear 'id'", http.StatusBadRequest)
@@ -70,7 +69,7 @@ func main() {
 			w.Write([]byte("Producto no encontrado"))
 		})
 
-		router.Get("/search", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/search", func(w http.ResponseWriter, r *http.Request) {
 			price := r.URL.Query().Get("priceGt")
 			if price == "" {
 				http.Error(w, "Parámetro 'priceGt' no proporcionado", http.StatusBadRequest)
@@ -93,4 +92,5 @@ func main() {
 		})
 	})
 
+	http.ListenAndServe(":8083", router)
 }
