@@ -22,18 +22,21 @@ type DefaultHTTP struct {
 }
 
 func (h *DefaultHTTP) Run() (err error) {
-	// - repository
 	rp := repository.NewProductMap(make(map[int]internal.Product), 0)
-	// - service
-	sv := service.NewProductDefault(rp)
-	// - handler
-	hd := handler.NewDefaultProducts(sv)
-	// - router
-	rt := chi.NewRouter()
-	//   endpoints
-	rt.Post("/products", hd.Create())
 
-	// run http server
+	sv := service.NewProductDefault(rp)
+
+	hd := handler.NewDefaultProducts(sv)
+
+	rt := chi.NewRouter()
+
+	rt.Route("/products", func(rt chi.Router) {
+		rt.Post("/", hd.Create())
+		rt.Put("/{id}", hd.Update())
+		rt.Patch("/{id}", hd.UpdatePartial())
+		rt.Delete("/{id}", hd.Delete())
+	})
+
 	err = http.ListenAndServe(h.addr, rt)
 	return
 }

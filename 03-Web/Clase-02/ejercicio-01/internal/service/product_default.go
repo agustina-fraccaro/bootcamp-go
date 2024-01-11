@@ -7,8 +7,7 @@ import (
 	"strconv"
 )
 
-// NewMovieDefault creates a new instance of a movie service
-func NewProductDefault(rp *internal.ProductRepository) *ProductDefault {
+func NewProductDefault(rp internal.ProductRepository) *ProductDefault {
 	return &ProductDefault{
 		rp: rp,
 	}
@@ -19,6 +18,23 @@ type ProductDefault struct {
 }
 
 func (p *ProductDefault) Save(product *internal.Product) (err error) {
+	if err = ValidateProduct(product); err != nil {
+		return
+	}
+
+	err = p.rp.Save(product)
+	if err != nil {
+		switch err {
+		case internal.ErrCodeValueAlreadyExists:
+			err = fmt.Errorf("%w: title", internal.ErrCodeValueAlreadyExists)
+		}
+		return
+	}
+
+	return
+}
+
+func ValidateProduct(product *internal.Product) (err error) {
 	if (*product).Name == "" {
 		return fmt.Errorf("%w: title", internal.ErrFieldRequired)
 	}
@@ -62,11 +78,45 @@ func (p *ProductDefault) Save(product *internal.Product) (err error) {
 	if year < 2021 || year > 2025 {
 		return errors.New("year is invalid")
 	}
-	err = p.rp.Save(product)
+
+	return
+}
+
+func (p *ProductDefault) Update(product *internal.Product) (err error) {
+	if err = ValidateProduct(product); err != nil {
+		return
+	}
+
+	err = p.rp.Update(product)
 	if err != nil {
 		switch err {
-		case internal.ErrCodeValueAlreadyExists:
-			err = fmt.Errorf("%w: title", internal.ErrCodeValueAlreadyExists)
+		case internal.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		}
+		return
+	}
+	return
+}
+
+func (m *ProductDefault) GetByID(id int) (product internal.Product, err error) {
+	product, err = m.rp.GetByID(id)
+	if err != nil {
+		switch err {
+		case internal.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		}
+		return
+	}
+
+	return
+}
+
+func (m *ProductDefault) Delete(id int) (err error) {
+	err = m.rp.Delete(id)
+	if err != nil {
+		switch err {
+		case internal.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
 		}
 		return
 	}

@@ -10,11 +10,9 @@ var (
 	ErrProductAlreadyExists = errors.New("product already exists")
 )
 
-// MovieService is an interface that represents a movie service
-// - business logic
-// - validation
-// - external services (e.g. apis, databases, etc.)
 type ProductService interface {
-	// Save saves a movie
 	Save(product *Product) (err error)
+	Update(product *Product) (err error)
+	GetByID(id int) (product Product, err error)
+	Delete(id int) (err error)
 }
