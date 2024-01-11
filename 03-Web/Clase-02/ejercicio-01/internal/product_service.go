@@ -15,4 +15,5 @@ type ProductService interface {
 	Update(product *Product) (err error)
 	GetByID(id int) (product Product, err error)
 	Delete(id int) (err error)
+	GetAll() (products []Product, err error)
 }

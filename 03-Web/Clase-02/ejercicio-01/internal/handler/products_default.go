@@ -284,7 +284,40 @@ func (d *DefaultProducts) Delete() http.HandlerFunc {
 			return
 		}
 
-		response.Text(w, http.StatusNoContent, "movie deleted")
+		response.Text(w, http.StatusNoContent, "product deleted")
+	}
+}
+
+func (d *DefaultProducts) GetAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		products, err := d.sv.GetAll()
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrNoProductsFound):
+				response.Text(w, http.StatusNotFound, "there are no products")
+			default:
+				response.Text(w, http.StatusInternalServerError, "internal server error")
+			}
+			return
+		}
+
+		var data []ProductJSON
+		for _, product := range products {
+			data = append(data, ProductJSON{
+				ID:          product.Id,
+				Name:        product.Name,
+				Quantity:    product.Quantity,
+				CodeValue:   product.CodeValue,
+				IsPublished: product.IsPublished,
+				Expiration:  product.Expiration,
+				Price:       product.Price,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "products found",
+			"data":    data,
+		})
 	}
 }
 

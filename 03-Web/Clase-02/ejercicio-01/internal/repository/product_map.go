@@ -70,3 +70,15 @@ func (m *ProductMap) Delete(id int) (err error) {
 	delete(m.db, id)
 	return
 }
+
+func (m *ProductMap) GetAll() (products []internal.Product, err error) {
+	for _, v := range m.db {
+		products = append(products, v)
+	}
+
+	if len(products) == 0 {
+		err = internal.ErrNoProductsFound
+	}
+
+	return
+}

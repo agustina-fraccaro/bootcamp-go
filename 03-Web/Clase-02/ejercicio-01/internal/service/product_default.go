@@ -26,7 +26,20 @@ func (p *ProductDefault) Save(product *internal.Product) (err error) {
 	if err != nil {
 		switch err {
 		case internal.ErrCodeValueAlreadyExists:
-			err = fmt.Errorf("%w: title", internal.ErrCodeValueAlreadyExists)
+			err = fmt.Errorf("%w: code value", internal.ErrCodeValueAlreadyExists)
+		}
+		return
+	}
+
+	return
+}
+
+func (p *ProductDefault) GetAll() (products []internal.Product, err error) {
+	products, err = p.rp.GetAll()
+	if err != nil {
+		switch err {
+		case internal.ErrCodeValueAlreadyExists:
+			err = fmt.Errorf("%w: code value", internal.ErrCodeValueAlreadyExists)
 		}
 		return
 	}
