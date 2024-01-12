@@ -4,8 +4,6 @@ import (
 	"app/internal/product"
 	"app/internal/product/repository"
 	"app/internal/product/service"
-	"app/platform/web/request"
-	"app/platform/web/response"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +11,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/bootcamp-go/web/request"
+	"github.com/bootcamp-go/web/response"
 	"github.com/go-chi/chi/v5"
 )
 
