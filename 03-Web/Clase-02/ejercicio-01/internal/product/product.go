@@ -1,5 +1,9 @@
 package product
 
+func NewProduct(id int, name string, quantity int, codeValue string, isPublished bool, expiration string, price float64) *Product {
+	return &Product{id, name, quantity, codeValue, isPublished, expiration, price}
+}
+
 type Product struct {
 	Id          int     `json:"id"`
 	Name        string  `json:"name"`

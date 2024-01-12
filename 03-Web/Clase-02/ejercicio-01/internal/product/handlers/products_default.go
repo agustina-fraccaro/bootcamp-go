@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"app/internal/auth"
 	"app/internal/product"
 	"app/internal/product/repository"
 	"app/internal/product/service"
@@ -16,14 +17,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewDefaultProducts(sv service.ProductService) *DefaultProducts {
+func NewDefaultProducts(sv service.ProductService, auth auth.AuthToken) *DefaultProducts {
 	return &DefaultProducts{
-		sv: sv,
+		sv:   sv,
+		auth: auth,
 	}
 }
 
 type DefaultProducts struct {
-	sv service.ProductService
+	sv   service.ProductService
+	auth auth.AuthToken
 }
 
 type ProductJSON struct {
@@ -83,6 +86,13 @@ func (d *DefaultProducts) GetByID() http.HandlerFunc {
 
 func (d *DefaultProducts) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Token")
+		err := d.auth.Auth(token)
+		if err != nil {
+			response.Error(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
 		var body BodyRequestProductJSON
 		if err := request.JSON(r, &body); err != nil {
 			response.Text(w, http.StatusBadRequest, "invalid body")
@@ -127,6 +137,13 @@ func (d *DefaultProducts) Create() http.HandlerFunc {
 
 func (d *DefaultProducts) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Token")
+		err := d.auth.Auth(token)
+		if err != nil {
+			response.Error(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
 		if err != nil {
 			response.Text(w, http.StatusBadRequest, "invalid id")
@@ -197,6 +214,13 @@ func (d *DefaultProducts) Update() http.HandlerFunc {
 
 func (d *DefaultProducts) UpdatePartial() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Token")
+		err := d.auth.Auth(token)
+		if err != nil {
+			response.Error(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
 		if err != nil {
 			response.Text(w, http.StatusBadRequest, "invalid id")
@@ -270,6 +294,13 @@ func (d *DefaultProducts) UpdatePartial() http.HandlerFunc {
 
 func (d *DefaultProducts) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Token")
+		err := d.auth.Auth(token)
+		if err != nil {
+			response.Error(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
 		if err != nil {
 			response.Text(w, http.StatusBadRequest, "invalid id")
