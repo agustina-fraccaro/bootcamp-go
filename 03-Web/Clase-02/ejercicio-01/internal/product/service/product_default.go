@@ -125,8 +125,8 @@ func (m *ProductDefault) GetByID(id int) (product product.Product, err error) {
 	return
 }
 
-func (m *ProductDefault) Delete(id int) (err error) {
-	err = m.rp.Delete(id)
+func (p *ProductDefault) Delete(id int) (err error) {
+	err = p.rp.Delete(id)
 	if err != nil {
 		switch err {
 		case repository.ErrProductNotFound:
@@ -135,5 +135,43 @@ func (m *ProductDefault) Delete(id int) (err error) {
 		return
 	}
 
+	return
+}
+
+func (p *ProductDefault) GetConsumerPrice(ids []string) (sumPrice float64, products []product.Product, err error) {
+	var prod product.Product
+	var id int
+
+	for _, v := range ids {
+		id, err = strconv.Atoi(v)
+		if err != nil {
+			err = fmt.Errorf("%w: id", ErrInvalidID)
+			return
+		}
+
+		prod, err = p.rp.GetByID(id)
+		if err != nil {
+			switch err {
+			case repository.ErrProductNotFound:
+				err = fmt.Errorf("%w: id", repository.ErrProductNotFound)
+			}
+			return
+		}
+
+		if prod.IsPublished {
+			sumPrice += prod.Price
+			products = append(products, prod)
+		}
+	}
+
+	cantProducts := len(ids)
+	switch {
+	case cantProducts < 10:
+		sumPrice += (sumPrice * 1.21)
+	case cantProducts >= 10 && cantProducts <= 20:
+		sumPrice += (sumPrice * 1.17)
+	case cantProducts > 20:
+		sumPrice += (sumPrice * 1.15)
+	}
 	return
 }

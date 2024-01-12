@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bootcamp-go/web/request"
 	"github.com/bootcamp-go/web/response"
@@ -350,6 +351,43 @@ func (d *DefaultProducts) GetAll() http.HandlerFunc {
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "products found",
 			"data":    data,
+		})
+	}
+}
+
+func (d *DefaultProducts) GetConsumerPrice() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		idList := r.URL.Query().Get("list")
+		idList = strings.Trim(idList, "[]")
+		ids := strings.Split(idList, ",")
+
+		sum, products, err := d.sv.GetConsumerPrice(ids)
+		if err != nil {
+			switch {
+			case errors.Is(err, repository.ErrProductNotFound):
+				response.Text(w, http.StatusNotFound, "product not found")
+			default:
+				response.Text(w, http.StatusInternalServerError, "internal server error")
+			}
+			return
+		}
+
+		var data []ProductJSON
+		for _, product := range products {
+			data = append(data, ProductJSON{
+				ID:          product.Id,
+				Name:        product.Name,
+				Quantity:    product.Quantity,
+				CodeValue:   product.CodeValue,
+				IsPublished: product.IsPublished,
+				Expiration:  product.Expiration,
+				Price:       product.Price,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, map[string]any{
+			"products":    data,
+			"total_price": sum,
 		})
 	}
 }

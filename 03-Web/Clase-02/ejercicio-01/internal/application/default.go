@@ -60,6 +60,7 @@ func (h *DefaultHTTP) Run() (err error) {
 		rt.Put("/{id}", hd.Update())
 		rt.Patch("/{id}", hd.UpdatePartial())
 		rt.Delete("/{id}", hd.Delete())
+		rt.Get("/consumer-price", hd.GetConsumerPrice())
 	})
 
 	err = http.ListenAndServe(h.addr, rt)
