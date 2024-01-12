@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"app/internal"
+	"app/internal/product"
 )
 
-func NewProductMap(db map[int]internal.Product, lastId int) *ProductMap {
+func NewProductMap(db map[int]product.Product, lastId int) *ProductMap {
 	return &ProductMap{
 		db:     db,
 		lastId: lastId,
@@ -12,11 +12,11 @@ func NewProductMap(db map[int]internal.Product, lastId int) *ProductMap {
 }
 
 type ProductMap struct {
-	db     map[int]internal.Product
+	db     map[int]product.Product
 	lastId int
 }
 
-func (p *ProductMap) Save(product *internal.Product) (err error) {
+func (p *ProductMap) Save(product *product.Product) (err error) {
 	if err = p.ValidateProductCodeValue((*product).CodeValue); err != nil {
 		return
 	}
@@ -32,17 +32,17 @@ func (p *ProductMap) Save(product *internal.Product) (err error) {
 func (p *ProductMap) ValidateProductCodeValue(codeValue string) (err error) {
 	for _, v := range (*p).db {
 		if v.CodeValue == codeValue {
-			return internal.ErrCodeValueAlreadyExists
+			return ErrCodeValueAlreadyExists
 		}
 	}
 
 	return
 }
 
-func (p *ProductMap) Update(product *internal.Product) (err error) {
+func (p *ProductMap) Update(product *product.Product) (err error) {
 	_, ok := p.db[(*product).Id]
 	if !ok {
-		err = internal.ErrProductNotFound
+		err = ErrProductNotFound
 		return
 	}
 
@@ -50,10 +50,10 @@ func (p *ProductMap) Update(product *internal.Product) (err error) {
 	return
 }
 
-func (m *ProductMap) GetByID(id int) (product internal.Product, err error) {
+func (m *ProductMap) GetByID(id int) (product product.Product, err error) {
 	product, ok := m.db[id]
 	if !ok {
-		err = internal.ErrProductNotFound
+		err = ErrProductNotFound
 		return
 	}
 
@@ -63,7 +63,7 @@ func (m *ProductMap) GetByID(id int) (product internal.Product, err error) {
 func (m *ProductMap) Delete(id int) (err error) {
 	_, ok := m.db[id]
 	if !ok {
-		err = internal.ErrProductNotFound
+		err = ErrProductNotFound
 		return
 	}
 
@@ -71,13 +71,13 @@ func (m *ProductMap) Delete(id int) (err error) {
 	return
 }
 
-func (m *ProductMap) GetAll() (products []internal.Product, err error) {
+func (m *ProductMap) GetAll() (products []product.Product, err error) {
 	for _, v := range m.db {
 		products = append(products, v)
 	}
 
 	if len(products) == 0 {
-		err = internal.ErrNoProductsFound
+		err = ErrNoProductsFound
 	}
 
 	return

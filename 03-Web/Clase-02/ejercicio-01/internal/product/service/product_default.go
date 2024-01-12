@@ -1,32 +1,33 @@
 package service
 
 import (
-	"app/internal"
+	"app/internal/product"
+	"app/internal/product/repository"
 	"errors"
 	"fmt"
 	"strconv"
 )
 
-func NewProductDefault(rp internal.ProductRepository) *ProductDefault {
+func NewProductDefault(rp repository.ProductRepository) *ProductDefault {
 	return &ProductDefault{
 		rp: rp,
 	}
 }
 
 type ProductDefault struct {
-	rp internal.ProductRepository
+	rp repository.ProductRepository
 }
 
-func (p *ProductDefault) Save(product *internal.Product) (err error) {
-	if err = ValidateProduct(product); err != nil {
+func (p *ProductDefault) Save(prod *product.Product) (err error) {
+	if err = ValidateProduct(prod); err != nil {
 		return
 	}
 
-	err = p.rp.Save(product)
+	err = p.rp.Save(prod)
 	if err != nil {
 		switch err {
-		case internal.ErrCodeValueAlreadyExists:
-			err = fmt.Errorf("%w: code value", internal.ErrCodeValueAlreadyExists)
+		case repository.ErrCodeValueAlreadyExists:
+			err = fmt.Errorf("%w: code value", repository.ErrCodeValueAlreadyExists)
 		}
 		return
 	}
@@ -34,12 +35,12 @@ func (p *ProductDefault) Save(product *internal.Product) (err error) {
 	return
 }
 
-func (p *ProductDefault) GetAll() (products []internal.Product, err error) {
+func (p *ProductDefault) GetAll() (products []product.Product, err error) {
 	products, err = p.rp.GetAll()
 	if err != nil {
 		switch err {
-		case internal.ErrCodeValueAlreadyExists:
-			err = fmt.Errorf("%w: code value", internal.ErrCodeValueAlreadyExists)
+		case repository.ErrCodeValueAlreadyExists:
+			err = fmt.Errorf("%w: code value", repository.ErrCodeValueAlreadyExists)
 		}
 		return
 	}
@@ -47,9 +48,9 @@ func (p *ProductDefault) GetAll() (products []internal.Product, err error) {
 	return
 }
 
-func ValidateProduct(product *internal.Product) (err error) {
+func ValidateProduct(product *product.Product) (err error) {
 	if (*product).Name == "" {
-		return fmt.Errorf("%w: title", internal.ErrFieldRequired)
+		return fmt.Errorf("%w: title", ErrFieldRequired)
 	}
 	if (*product).Quantity == 0 {
 		return errors.New("quantity is required")
@@ -95,7 +96,7 @@ func ValidateProduct(product *internal.Product) (err error) {
 	return
 }
 
-func (p *ProductDefault) Update(product *internal.Product) (err error) {
+func (p *ProductDefault) Update(product *product.Product) (err error) {
 	if err = ValidateProduct(product); err != nil {
 		return
 	}
@@ -103,20 +104,20 @@ func (p *ProductDefault) Update(product *internal.Product) (err error) {
 	err = p.rp.Update(product)
 	if err != nil {
 		switch err {
-		case internal.ErrProductNotFound:
-			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		case repository.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", repository.ErrProductNotFound)
 		}
 		return
 	}
 	return
 }
 
-func (m *ProductDefault) GetByID(id int) (product internal.Product, err error) {
+func (m *ProductDefault) GetByID(id int) (product product.Product, err error) {
 	product, err = m.rp.GetByID(id)
 	if err != nil {
 		switch err {
-		case internal.ErrProductNotFound:
-			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		case repository.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", repository.ErrProductNotFound)
 		}
 		return
 	}
@@ -128,8 +129,8 @@ func (m *ProductDefault) Delete(id int) (err error) {
 	err = m.rp.Delete(id)
 	if err != nil {
 		switch err {
-		case internal.ErrProductNotFound:
-			err = fmt.Errorf("%w: id", internal.ErrProductNotFound)
+		case repository.ErrProductNotFound:
+			err = fmt.Errorf("%w: id", repository.ErrProductNotFound)
 		}
 		return
 	}

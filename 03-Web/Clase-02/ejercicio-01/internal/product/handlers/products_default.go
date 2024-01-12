@@ -1,7 +1,9 @@
-package handler
+package handlers
 
 import (
-	"app/internal"
+	"app/internal/product"
+	"app/internal/product/repository"
+	"app/internal/product/service"
 	"app/platform/web/request"
 	"app/platform/web/response"
 	"encoding/json"
@@ -11,17 +13,17 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
-func NewDefaultProducts(sv internal.ProductService) *DefaultProducts {
+func NewDefaultProducts(sv service.ProductService) *DefaultProducts {
 	return &DefaultProducts{
 		sv: sv,
 	}
 }
 
 type DefaultProducts struct {
-	sv internal.ProductService
+	sv service.ProductService
 }
 
 type ProductJSON struct {
@@ -54,7 +56,7 @@ func (d *DefaultProducts) GetByID() http.HandlerFunc {
 		product, err := d.sv.GetByID(id)
 		if err != nil {
 			switch {
-			case errors.Is(err, internal.ErrProductNotFound):
+			case errors.Is(err, repository.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
@@ -86,7 +88,7 @@ func (d *DefaultProducts) Create() http.HandlerFunc {
 			response.Text(w, http.StatusBadRequest, "invalid body")
 			return
 		}
-		product := internal.Product{
+		product := product.Product{
 			Name:        body.Name,
 			Quantity:    body.Quantity,
 			CodeValue:   body.CodeValue,
@@ -97,9 +99,9 @@ func (d *DefaultProducts) Create() http.HandlerFunc {
 
 		if err := d.sv.Save(&product); err != nil {
 			switch {
-			case errors.Is(err, internal.ErrFieldRequired), errors.Is(err, internal.ErrFieldQuality):
+			case errors.Is(err, service.ErrFieldRequired), errors.Is(err, service.ErrFieldQuality):
 				response.Text(w, http.StatusBadRequest, "invalid body")
-			case errors.Is(err, internal.ErrCodeValueAlreadyExists):
+			case errors.Is(err, repository.ErrCodeValueAlreadyExists):
 				response.Text(w, http.StatusConflict, "product already exists")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
@@ -154,7 +156,7 @@ func (d *DefaultProducts) Update() http.HandlerFunc {
 			return
 		}
 
-		product := internal.Product{
+		product := product.Product{
 			Id:          id,
 			Name:        body.Name,
 			Quantity:    body.Quantity,
@@ -166,9 +168,9 @@ func (d *DefaultProducts) Update() http.HandlerFunc {
 
 		if err := d.sv.Update(&product); err != nil {
 			switch {
-			case errors.Is(err, internal.ErrProductNotFound):
+			case errors.Is(err, repository.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "product not found")
-			case errors.Is(err, internal.ErrFieldRequired), errors.Is(err, internal.ErrFieldQuality):
+			case errors.Is(err, service.ErrFieldRequired), errors.Is(err, service.ErrFieldQuality):
 				response.Text(w, http.StatusBadRequest, "invalid body")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
@@ -201,10 +203,10 @@ func (d *DefaultProducts) UpdatePartial() http.HandlerFunc {
 			return
 		}
 
-		product, err := d.sv.GetByID(id)
+		prod, err := d.sv.GetByID(id)
 		if err != nil {
 			switch {
-			case errors.Is(err, internal.ErrProductNotFound):
+			case errors.Is(err, repository.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
@@ -213,12 +215,12 @@ func (d *DefaultProducts) UpdatePartial() http.HandlerFunc {
 		}
 
 		reqBody := BodyRequestProductJSON{
-			Name:        product.Name,
-			Quantity:    product.Quantity,
-			CodeValue:   product.CodeValue,
-			IsPublished: product.IsPublished,
-			Expiration:  product.Expiration,
-			Price:       product.Price,
+			Name:        prod.Name,
+			Quantity:    prod.Quantity,
+			CodeValue:   prod.CodeValue,
+			IsPublished: prod.IsPublished,
+			Expiration:  prod.Expiration,
+			Price:       prod.Price,
 		}
 
 		if err := request.JSON(r, &reqBody); err != nil {
@@ -226,7 +228,7 @@ func (d *DefaultProducts) UpdatePartial() http.HandlerFunc {
 			return
 		}
 
-		product = internal.Product{
+		prod = product.Product{
 			Id:          id,
 			Name:        reqBody.Name,
 			Quantity:    reqBody.Quantity,
@@ -236,11 +238,11 @@ func (d *DefaultProducts) UpdatePartial() http.HandlerFunc {
 			Price:       reqBody.Price,
 		}
 
-		if err := d.sv.Update(&product); err != nil {
+		if err := d.sv.Update(&prod); err != nil {
 			switch {
-			case errors.Is(err, internal.ErrProductNotFound):
+			case errors.Is(err, repository.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "product not found")
-			case errors.Is(err, internal.ErrFieldRequired), errors.Is(err, internal.ErrFieldQuality):
+			case errors.Is(err, service.ErrFieldRequired), errors.Is(err, service.ErrFieldQuality):
 				response.Text(w, http.StatusBadRequest, "invalid body")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
@@ -276,7 +278,7 @@ func (d *DefaultProducts) Delete() http.HandlerFunc {
 
 		if err := d.sv.Delete(id); err != nil {
 			switch {
-			case errors.Is(err, internal.ErrProductNotFound):
+			case errors.Is(err, repository.ErrProductNotFound):
 				response.Text(w, http.StatusNotFound, "product not found")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
@@ -293,7 +295,7 @@ func (d *DefaultProducts) GetAll() http.HandlerFunc {
 		products, err := d.sv.GetAll()
 		if err != nil {
 			switch {
-			case errors.Is(err, internal.ErrNoProductsFound):
+			case errors.Is(err, repository.ErrNoProductsFound):
 				response.Text(w, http.StatusNotFound, "there are no products")
 			default:
 				response.Text(w, http.StatusInternalServerError, "internal server error")
