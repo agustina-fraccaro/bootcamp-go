@@ -326,13 +326,7 @@ func (d *DefaultProducts) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		products, err := d.sv.GetAll()
 		if err != nil {
-			switch {
-			case errors.Is(err, repository.ErrNoProductsFound):
-				response.Text(w, http.StatusNotFound, "there are no products")
-			default:
-				fmt.Println(err)
-				response.Text(w, http.StatusInternalServerError, "internal server error")
-			}
+			response.Text(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 

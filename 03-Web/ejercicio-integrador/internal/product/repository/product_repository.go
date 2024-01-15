@@ -8,7 +8,6 @@ import (
 var (
 	ErrCodeValueAlreadyExists = errors.New("code value already exists")
 	ErrProductNotFound        = errors.New("product not found")
-	ErrNoProductsFound        = errors.New("no products found")
 )
 
 type ProductRepository interface {

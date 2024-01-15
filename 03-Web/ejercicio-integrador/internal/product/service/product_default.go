@@ -38,10 +38,6 @@ func (p *ProductDefault) Create(prod *product.Product) (err error) {
 func (p *ProductDefault) GetAll() (products []product.Product, err error) {
 	products, err = p.rp.GetAll()
 	if err != nil {
-		switch err {
-		case repository.ErrCodeValueAlreadyExists:
-			err = fmt.Errorf("%w: code value", repository.ErrCodeValueAlreadyExists)
-		}
 		return
 	}
 

@@ -76,9 +76,5 @@ func (m *ProductMap) GetAll() (products []product.Product, err error) {
 		products = append(products, v)
 	}
 
-	if len(products) == 0 {
-		err = ErrNoProductsFound
-	}
-
 	return
 }
