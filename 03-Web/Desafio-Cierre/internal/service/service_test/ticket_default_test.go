@@ -11,7 +11,7 @@ import (
 )
 
 // Tests for ServiceTicketDefault.GetTotalAmountTickets
-func TestServiceTicketDefault_GetTotalAmountTickets() {
+func TestServiceTicketDefault_GetTotalAmountTickets(t *testing.T) {
 	t.Run("success to get total tickets", func(t *testing.T) {
 		// arrange
 		// - repository: mock

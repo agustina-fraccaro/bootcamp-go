@@ -6,8 +6,8 @@ import (
 )
 
 // NewRepositoryTicketMock creates a new repository for tickets in a map
-func NewRepositoryTicketMock() *RepositoryTicketMap {
-	return &RepositoryTicketMap{}
+func NewRepositoryTicketMock() *RepositoryTicketMock {
+	return &RepositoryTicketMock{}
 }
 
 // RepositoryTicketMock implements the repository interface for tickets

@@ -44,3 +44,17 @@ func (s *ServiceTicketDefault) GetTicketsAmountByDestinationCountry(country stri
 	total = len(tickets)
 	return
 }
+
+func (s *ServiceTicketDefault) GetPercentageTicketsByDestinationCountry(country string) (total int, err error) {
+	total, err = s.GetTotalAmountTickets()
+	if err != nil {
+		return
+	}
+	var totalDestination int
+	totalDestination, err = s.GetTicketsAmountByDestinationCountry(country)
+	if err != nil {
+		return
+	}
+
+	return (totalDestination * 100) / total, err
+}

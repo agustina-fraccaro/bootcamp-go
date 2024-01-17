@@ -67,6 +67,8 @@ func (a *ApplicationDefault) SetUp() (err error) {
 	hd := handler.NewTicketDefault(sv)
 
 	(*a).rt.Get("/tickets", hd.Get())
+	(*a).rt.Get("/tickets/getByCountry/{country}", hd.GetTicketsAmountByDestinationCountry())
+	(*a).rt.Get("/tickets/getAverage/{country}", hd.GetPercentageTicketsByDestinationCountry())
 
 	// routes
 	(*a).rt.Get("/health", func(w http.ResponseWriter, r *http.Request) {

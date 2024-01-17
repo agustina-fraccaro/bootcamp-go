@@ -16,7 +16,7 @@ func main() {
 		ServerAddr: os.Getenv("SERVER_ADDR"),
 		DbFile:     os.Getenv("DB_FILE"),
 	}
-	app := NewApplicationDefault(cfg)
+	app := application.NewApplicationDefault(cfg)
 
 	// - setup
 	err := app.SetUp()

@@ -8,5 +8,5 @@ type ServiceTicket interface {
 	GetTicketsAmountByDestinationCountry(country string) (total int, err error)
 
 	// GetPercentageTicketsByDestinationCountry returns the percentage of tickets filtered by destination country
-	// ...
+	GetPercentageTicketsByDestinationCountry(country string) (total int, err error)
 }
