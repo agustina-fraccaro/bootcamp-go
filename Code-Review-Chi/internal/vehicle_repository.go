@@ -21,7 +21,7 @@ type VehicleRepository interface {
 	FindByFuelType(fuelType string) (v map[int]Vehicle, err error)
 	FindByTransmissionType(transmission string) (v map[int]Vehicle, err error)
 	Update(vehicle *Vehicle) (err error)
-	FindByDimensions(query map[string]any) (v map[int]Vehicle, err error)
+	FindByDimensions(query map[string]float64) (v map[int]Vehicle, err error)
 	FindByWeight(query map[string]float64) (v map[int]Vehicle, err error)
 	GetById(id int) (v Vehicle, err error)
 }

@@ -21,6 +21,6 @@ type VehicleService interface {
 	Update(vehicle *Vehicle) (err error)
 	FindAverageCapacityByBrand(brand string) (averageCapacity float64, err error)
 	FindByWeight(query map[string]float64) (v map[int]Vehicle, err error)
-	FindByDimensions(query map[string]any) (v map[int]Vehicle, err error)
+	FindByDimensions(query map[string]float64) (v map[int]Vehicle, err error)
 	GetById(id int) (v Vehicle, err error)
 }

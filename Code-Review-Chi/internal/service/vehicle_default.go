@@ -121,7 +121,7 @@ func (s *VehicleDefault) GetById(id int) (v internal.Vehicle, err error) {
 	return
 }
 
-func (s *VehicleDefault) FindByDimensions(query map[string]any) (v map[int]internal.Vehicle, err error) {
+func (s *VehicleDefault) FindByDimensions(query map[string]float64) (v map[int]internal.Vehicle, err error) {
 	if len(query) != 4 {
 		err = internal.ErrInvalidQuery
 		return

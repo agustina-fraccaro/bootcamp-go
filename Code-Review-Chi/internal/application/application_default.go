@@ -85,6 +85,7 @@ func (a *ServerChi) Run() (err error) {
 		rt.Get("/dimensions", hd.GetByDimensions())
 		rt.Put("/{id}/update_fuel", hd.UpdateFuelType())
 		rt.Put("/{id}/update_speed", hd.UpdateSpeed())
+		rt.Get("/{id}", hd.GetById())
 	})
 
 	// run server

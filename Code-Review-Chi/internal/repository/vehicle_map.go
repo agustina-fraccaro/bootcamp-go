@@ -156,16 +156,10 @@ func (r *VehicleMap) FindByWeight(query map[string]float64) (v map[int]internal.
 	return
 }
 
-func (r *VehicleMap) FindByDimensions(query map[string]any) (v map[int]internal.Vehicle, err error) {
+func (r *VehicleMap) FindByDimensions(query map[string]float64) (v map[int]internal.Vehicle, err error) {
 	v = make(map[int]internal.Vehicle)
 	for key, value := range (*r).db {
 		lengthMin, ok := query["min_length"]
-		if !ok {
-			err = internal.ErrInvalidQuery
-			return
-		}
-
-		lengthMinFloat, ok := lengthMin.(float64)
 		if !ok {
 			err = internal.ErrInvalidQuery
 			return
@@ -176,37 +170,19 @@ func (r *VehicleMap) FindByDimensions(query map[string]any) (v map[int]internal.
 			err = internal.ErrInvalidQuery
 			return
 		}
-		lengthMaxFloat, ok := lengthMax.(float64)
-		if !ok {
-			err = internal.ErrInvalidQuery
-			return
-		}
 
 		widthMin, ok := query["min_width"]
 		if !ok {
 			err = internal.ErrInvalidQuery
 			return
 		}
-
-		widthMinFloat, ok := widthMin.(float64)
-		if !ok {
-			err = internal.ErrInvalidQuery
-			return
-		}
-
 		widthMax, ok := query["max_width"]
 		if !ok {
 			err = internal.ErrInvalidQuery
 			return
 		}
 
-		widthMaxFloat, ok := widthMax.(float64)
-		if !ok {
-			err = internal.ErrInvalidQuery
-			return
-		}
-
-		if value.VehicleAttributes.Dimensions.Length >= lengthMinFloat && value.VehicleAttributes.Dimensions.Length <= lengthMaxFloat && value.VehicleAttributes.Dimensions.Width >= widthMinFloat && value.VehicleAttributes.Dimensions.Width <= widthMaxFloat {
+		if value.VehicleAttributes.Dimensions.Length >= lengthMin && value.VehicleAttributes.Dimensions.Length <= lengthMax && value.VehicleAttributes.Dimensions.Width >= widthMin && value.VehicleAttributes.Dimensions.Width <= widthMax {
 			v[key] = value
 		}
 

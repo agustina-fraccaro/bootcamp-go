@@ -546,6 +546,11 @@ func (h *VehicleDefault) GetByWeight() http.HandlerFunc {
 				response.Text(w, http.StatusBadRequest, "max_weight must be a number")
 				return
 			}
+			if weightMaxFloat < query["min_weight"] {
+				response.Text(w, http.StatusBadRequest, "invalid range of weights")
+				return
+			}
+
 			query["max_weight"] = weightMaxFloat
 		}
 
@@ -591,7 +596,7 @@ func (h *VehicleDefault) GetByWeight() http.HandlerFunc {
 
 func (h *VehicleDefault) GetByDimensions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		query := make(map[string]any)
+		query := make(map[string]float64)
 		length, ok := r.URL.Query()["length"]
 		if ok {
 			lengthSplit := strings.Split(length[0], "-")
@@ -607,6 +612,11 @@ func (h *VehicleDefault) GetByDimensions() http.HandlerFunc {
 			lengthMax, err := strconv.ParseFloat(lengthSplit[1], 64)
 			if err != nil {
 				response.Text(w, http.StatusBadRequest, "invalid length")
+				return
+			}
+
+			if lengthMax < lengthMin {
+				response.Text(w, http.StatusBadRequest, "invalid length range")
 				return
 			}
 			query["min_length"] = lengthMin
@@ -628,6 +638,10 @@ func (h *VehicleDefault) GetByDimensions() http.HandlerFunc {
 			widthMax, err := strconv.ParseFloat(widthSplit[1], 64)
 			if err != nil {
 				response.Text(w, http.StatusBadRequest, "invalid width")
+				return
+			}
+			if widthMax < widthMin {
+				response.Text(w, http.StatusBadRequest, "invalid width range")
 				return
 			}
 			query["min_width"] = widthMin
@@ -821,6 +835,49 @@ func (h *VehicleDefault) UpdateSpeed() http.HandlerFunc {
 			Height:          reqBody.Height,
 			Length:          reqBody.Length,
 			Width:           reqBody.Width,
+		}
+
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+	}
+}
+
+func (h *VehicleDefault) GetById() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			response.Text(w, http.StatusBadRequest, "invalid id")
+			return
+		}
+
+		vehicle, err := h.sv.GetById(id)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrVehicleNotFound):
+				response.Text(w, http.StatusNotFound, "vehicle not found")
+			default:
+				response.Text(w, http.StatusInternalServerError, "internal server error")
+			}
+			return
+		}
+
+		data := VehicleJSON{
+			ID:              vehicle.Id,
+			Brand:           vehicle.VehicleAttributes.Brand,
+			Model:           vehicle.VehicleAttributes.Model,
+			Registration:    vehicle.VehicleAttributes.Registration,
+			Color:           vehicle.VehicleAttributes.Color,
+			FabricationYear: vehicle.VehicleAttributes.FabricationYear,
+			Capacity:        vehicle.VehicleAttributes.Capacity,
+			MaxSpeed:        vehicle.VehicleAttributes.MaxSpeed,
+			FuelType:        vehicle.VehicleAttributes.FuelType,
+			Transmission:    vehicle.VehicleAttributes.Transmission,
+			Weight:          vehicle.VehicleAttributes.Weight,
+			Height:          vehicle.VehicleAttributes.Dimensions.Height,
+			Length:          vehicle.VehicleAttributes.Dimensions.Length,
+			Width:           vehicle.VehicleAttributes.Dimensions.Width,
 		}
 
 		response.JSON(w, http.StatusOK, map[string]any{
