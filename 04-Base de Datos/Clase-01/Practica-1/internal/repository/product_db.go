@@ -20,14 +20,35 @@ type RepositoryProductDB struct {
 	db *sql.DB
 }
 
+func (r *RepositoryProductDB) FindAll() (ps []internal.Product, err error) {
+	rows, err := r.db.Query("SELECT id, name, price, quantity, code_value, is_published, expiration, id_warehouse FROM products")
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p internal.Product
+		if err = rows.Scan(&p.Id, &p.Name, &p.Price, &p.Quantity, &p.CodeValue, &p.IsPublished, &p.Expiration, &p.WarehouseId); err != nil {
+			return
+		}
+
+		ps = append(ps, p)
+	}
+
+	return
+
+}
+
 func (r *RepositoryProductDB) FindById(id int) (p internal.Product, err error) {
-	row := r.db.QueryRow("SELECT id, name, price, quantity, code_value, is_published, expiration FROM product WHERE id = ?", id)
+	row := r.db.QueryRow("SELECT id, name, price, quantity, code_value, is_published, expiration, id_warehouse FROM products WHERE id = ?", id)
 	if err = row.Err(); err != nil {
 		return
 	}
 
-	if err = row.Scan(&p.Id, &p.Name, &p.Quantity, &p.Price, &p.CodeValue, &p.Expiration, &p.IsPublished); err != nil {
+	if err = row.Scan(&p.Id, &p.Name, &p.Price, &p.Quantity, &p.CodeValue, &p.IsPublished, &p.Expiration, &p.WarehouseId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			err = internal.ErrRepositoryProductNotFound
 			return
 		}
 	}
@@ -36,7 +57,7 @@ func (r *RepositoryProductDB) FindById(id int) (p internal.Product, err error) {
 }
 
 func (r *RepositoryProductDB) Save(p *internal.Product) (err error) {
-	result, err := r.db.Exec("INSERT INTO product (name, price, quantity, code_value, is_published, expiration) VALUES (?, ?, ?, ?, ?, ?)", (*p).Name, (*p).Price, (*p).Quantity, (*p).CodeValue, (*p).IsPublished, (*p).Expiration)
+	result, err := r.db.Exec("INSERT INTO products (name, price, quantity, code_value, is_published, expiration, id_warehouse) VALUES (?, ?, ?, ?, ?, ?, ?)", (*p).Name, (*p).Price, (*p).Quantity, (*p).CodeValue, (*p).IsPublished, (*p).Expiration, (*p).WarehouseId)
 
 	if err != nil {
 		return
@@ -52,7 +73,7 @@ func (r *RepositoryProductDB) Save(p *internal.Product) (err error) {
 }
 
 func (r *RepositoryProductDB) UpdateOrSave(p *internal.Product) (err error) {
-	result, err := r.db.Exec("UPDATE product SET name = ?, price = ?, quantity = ?, code_value = ?, is_published = ?, expiration = ? WHERE id = ?", (*p).Name, (*p).Price, (*p).Quantity, (*p).CodeValue, (*p).IsPublished, (*p).Expiration, (*p).Id)
+	result, err := r.db.Exec("UPDATE products SET name = ?, price = ?, quantity = ?, code_value = ?, is_published = ?, expiration = ?, id_warehouse = ? WHERE id = ?", (*p).Name, (*p).Price, (*p).Quantity, (*p).CodeValue, (*p).IsPublished, (*p).Expiration, (*p).WarehouseId, (*p).Id)
 	if err != nil {
 		return
 	}
@@ -73,7 +94,7 @@ func (r *RepositoryProductDB) UpdateOrSave(p *internal.Product) (err error) {
 }
 
 func (r *RepositoryProductDB) Update(p *internal.Product) (err error) {
-	result, err := r.db.Exec("UPDATE product SET name = ?, price = ?, quantity = ?, code_value = ?, is_published = ?, expiration = ? WHERE id = ?", (*p).Name, (*p).Price, (*p).Quantity, (*p).CodeValue, (*p).IsPublished, (*p).Expiration, (*p).Id)
+	result, err := r.db.Exec("UPDATE product SET name = ?, price = ?, quantity = ?, code_value = ?, is_published = ?, expiration = ?, id_warehouse = ? WHERE id = ?", (*p).Name, (*p).Price, (*p).Quantity, (*p).CodeValue, (*p).IsPublished, (*p).Expiration, (*p).WarehouseId, (*p).Id)
 	if err != nil {
 		return
 	}
@@ -92,12 +113,44 @@ func (r *RepositoryProductDB) Update(p *internal.Product) (err error) {
 }
 
 func (r *RepositoryProductDB) Delete(id int) (err error) {
-	_, err = r.db.Exec("DELETE FROM product WHERE id = ?", id)
+	_, err = r.db.Exec("DELETE FROM products WHERE id = ?", id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = internal.ErrRepositoryProductNotFound
 		}
 		return
 	}
+	return
+}
+
+func (r *RepositoryProductDB) GetReport(query map[string]int) (p map[string]int, err error) {
+	var rows *sql.Rows
+	p = make(map[string]int)
+	if query == nil {
+		rows, err = r.db.Query("SELECT w.name, COUNT(p.id_warehouse) FROM products p INNER JOIN warehouses w ON p.id_warehouse = w.id GROUP BY p.id_warehouse")
+		if err != nil {
+			return
+		}
+	} else {
+		rows, err = r.db.Query("SELECT w.name, COUNT(p.id_warehouse) FROM products p INNER JOIN warehouses w ON p.id_warehouse = w.id WHERE p.id_warehouse = ? GROUP BY p.id_warehouse", query["id"])
+		if err != nil {
+			return
+		}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		var count int
+		if err = rows.Scan(&name, &count); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				err = internal.ErrRepositoryProductNotFound
+				return
+			}
+		}
+
+		p[name] = count
+	}
+
 	return
 }

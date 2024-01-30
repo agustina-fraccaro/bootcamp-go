@@ -24,4 +24,6 @@ type Product struct {
 	Id int
 	// ProductAttributes is the attributes of the product
 	ProductAttributes
+
+	WarehouseId int
 }

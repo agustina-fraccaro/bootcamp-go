@@ -5,6 +5,7 @@ import (
 	"app/platform/web/request"
 	"app/platform/web/response"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -35,6 +36,40 @@ type ProductJSON struct {
 	IsPublished bool    `json:"is_published"`
 	Expiration  string  `json:"expiration"`
 	Price       float64 `json:"price"`
+	WarehouseId int     `json:"warehouse_id"`
+}
+
+type ReportProductsJSON struct {
+	Name         string `json:"name"`
+	ProductCount int    `json:"product_count"`
+}
+
+func (h *HandlerProduct) GetAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		products, err := h.rp.FindAll()
+		if err != nil {
+			response.JSON(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+
+		var data []ProductJSON
+		for _, p := range products {
+			data = append(data, ProductJSON{
+				Id:          p.Id,
+				Name:        p.Name,
+				Quantity:    p.Quantity,
+				CodeValue:   p.CodeValue,
+				IsPublished: p.IsPublished,
+				Expiration:  p.Expiration.Format(time.RFC3339),
+				Price:       p.Price,
+				WarehouseId: p.WarehouseId,
+			})
+		}
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
+	}
 }
 
 // GetById gets a product by id.
@@ -56,6 +91,7 @@ func (h *HandlerProduct) GetById() http.HandlerFunc {
 			case errors.Is(err, internal.ErrRepositoryProductNotFound):
 				response.JSON(w, http.StatusNotFound, "product not found")
 			default:
+				fmt.Println(err)
 				response.JSON(w, http.StatusInternalServerError, "internal server error")
 			}
 			return
@@ -71,6 +107,7 @@ func (h *HandlerProduct) GetById() http.HandlerFunc {
 			IsPublished: p.IsPublished,
 			Expiration:  p.Expiration.Format(time.DateOnly),
 			Price:       p.Price,
+			WarehouseId: p.WarehouseId,
 		}
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -87,6 +124,7 @@ type RequestBodyProductCreate struct {
 	IsPublished bool    `json:"is_published"`
 	Expiration  string  `json:"expiration"`
 	Price       float64 `json:"price"`
+	WarehouseId int     `json:"warehouse_id"`
 }
 
 // Create creates a product.
@@ -118,6 +156,7 @@ func (h *HandlerProduct) Create() http.HandlerFunc {
 				Expiration:  exp,
 				Price:       body.Price,
 			},
+			WarehouseId: body.WarehouseId,
 		}
 		err = h.rp.Save(&p)
 		if err != nil {
@@ -135,6 +174,7 @@ func (h *HandlerProduct) Create() http.HandlerFunc {
 			IsPublished: p.IsPublished,
 			Expiration:  p.Expiration.Format(time.DateOnly),
 			Price:       p.Price,
+			WarehouseId: p.WarehouseId,
 		}
 		response.JSON(w, http.StatusCreated, map[string]any{
 			"message": "success",
@@ -179,6 +219,7 @@ func (h *HandlerProduct) UpdateOrCreate() http.HandlerFunc {
 				Expiration:  exp,
 				Price:       body.Price,
 			},
+			WarehouseId: body.WarehouseId,
 		}
 		err = h.rp.UpdateOrSave(&p)
 		if err != nil {
@@ -196,6 +237,7 @@ func (h *HandlerProduct) UpdateOrCreate() http.HandlerFunc {
 			IsPublished: p.IsPublished,
 			Expiration:  p.Expiration.Format(time.DateOnly),
 			Price:       p.Price,
+			WarehouseId: p.WarehouseId,
 		}
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -235,6 +277,7 @@ func (h *HandlerProduct) Update() http.HandlerFunc {
 			IsPublished: p.IsPublished,
 			Expiration:  p.Expiration.Format(time.DateOnly),
 			Price:       p.Price,
+			WarehouseId: p.WarehouseId,
 		}
 		err = request.JSON(r, &body)
 		if err != nil {
@@ -254,6 +297,7 @@ func (h *HandlerProduct) Update() http.HandlerFunc {
 		p.IsPublished = body.IsPublished
 		p.Expiration = exp
 		p.Price = body.Price
+		p.WarehouseId = body.WarehouseId
 		err = h.rp.Update(&p)
 		if err != nil {
 			response.JSON(w, http.StatusInternalServerError, "internal server error")
@@ -270,6 +314,7 @@ func (h *HandlerProduct) Update() http.HandlerFunc {
 			IsPublished: p.IsPublished,
 			Expiration:  p.Expiration.Format(time.DateOnly),
 			Price:       p.Price,
+			WarehouseId: p.WarehouseId,
 		}
 		response.JSON(w, http.StatusOK, map[string]any{
 			"message": "success",
@@ -304,5 +349,50 @@ func (h *HandlerProduct) Delete() http.HandlerFunc {
 
 		// response
 		response.JSON(w, http.StatusNoContent, nil)
+	}
+}
+
+func (h *HandlerProduct) GetByWarehouseId() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// get query params
+		// - warehouse id
+		var query map[string]int
+		id_str := r.URL.Query().Get("id")
+		if id_str != "" {
+			id, err := strconv.Atoi(id_str)
+			if err != nil {
+				response.JSON(w, http.StatusBadRequest, "invalid id")
+				return
+			}
+			query["id"] = id
+		}
+
+		// process
+		// - find products by warehouse id
+		products, err := h.rp.GetReport(query)
+		if err != nil {
+			switch {
+			case errors.Is(err, internal.ErrRepositoryProductNotFound):
+				response.JSON(w, http.StatusNotFound, "product not found")
+			default:
+				response.JSON(w, http.StatusInternalServerError, "internal server error")
+			}
+			return
+		}
+
+		// response
+		// - serialize products to JSON
+		var data []ReportProductsJSON
+		for key, value := range products {
+			data = append(data, ReportProductsJSON{
+				Name:         key,
+				ProductCount: value,
+			})
+		}
+
+		response.JSON(w, http.StatusOK, map[string]any{
+			"message": "success",
+			"data":    data,
+		})
 	}
 }
